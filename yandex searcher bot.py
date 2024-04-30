@@ -147,7 +147,7 @@ def callback_query(call):
 
 
 @bot.message_handler(content_types=['photo'])
-def Sarcher(message):
+def Searcher(message):
     try:
         photo_id = message.photo[len(message.photo) - 1].file_id
         file_info = bot.get_file(photo_id)
