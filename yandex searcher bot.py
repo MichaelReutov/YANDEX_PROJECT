@@ -1,68 +1,97 @@
-import requests
-import telebot
-from telebot.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
-from datetime import timedelta
 import json
+from datetime import timedelta
 
-TOKEN = '6534511997:AAH66ugDr5q2DpZGRRb8roKyAhmBM6aK3ok'
+import re
+
+import requests
+
+import telebot
+
+import wikipedia
+
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+TOKEN = '7033029505:AAHqkMN1_j-GbQOTviKfx3-cYkdYOK0MJrw'
 bot = telebot.TeleBot(TOKEN)
 animeData = {}
 page = 0
 VideoMoment = False
-
+# Устанавливаем русский язык в Wikipedia
+wikipedia.set_lang("ru")
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    welcome_text = '''🌟 Welcome to our Anime Search Bot! 🌟
+    welcome_text = '''🌟 Yo, what's good, fam?! 🌟
 
-This bot is designed to help you find your favorite anime using images. With advanced  algorithms, we can quickly and accurately identify anime series from images you provide.
+I'm your go-to bot, here to help you out with all sorts of things. I can help you find your favorite anime, explain the meaning of words, give you that extra motivation you need, and even rate your outfit. 💯
 
-To get started, simply send us an image of the anime you're looking for. You can send images directly from your device or share them from the web.
+Today's April 30, 2024, and I'm here to make your life easier and more fun. Just hit me up with a message, and I'll get right on it.
 
-Once we receive the image, we'll analyze it and provide you with detailed information about the anime, including its title, English name, episode number, airtime, and more!
+📺 Anime Time: I'm all over anime, from classic series to the latest shows. Just send me an image or a description, and I'll give you the details – title, English name, episode number, airtime, and more. I'm always learning and improving, so the more you use me, the better I get.
 
-Our bot is constantly learning and improving, so the more images you send, the better we can serve you. 
+📚 Word Up: Need to know the meaning of a word? I got you covered. Just ask me, and I'll give you the definition, synonyms, and even examples of how to use it.
 
-We're committed to providing you with the best possible experience, so if you have any questions or feedback, please don't hesitate to let us know.
+💪 Motivation: Sometimes we all need a little boost. I'm here to help you stay focused and motivated, whether you're working on a project, hitting the gym, or just need a positive vibe.
 
-Happy searching, and we hope you enjoy using our Anime Search Bot! 😊
+💼 Outfit Game: Not sure about your outfit? Send me a pic, and I'll rate it for you. I'll give you an honest opinion, so you can step out in style.
 
-Send an image of the anime you're looking for.
+So, what are you waiting for? Let's get this conversation started and make your day better. And remember, I'm here 24/7, so don't hesitate to reach out.
 
-Receive detailed information about the anime.
+🤖 What can Vince do 🤖
 
-Enjoy using our bot.
+🔍 Anime and word search
 
-Provide feedback or questions to help us improve.
+💪 Motivation and outfit rating
 
-🤖 Anime Search Bot Features 🤖
+💻 Continuous learning and improvement
 
-Fast and accurate image analysis.
+💬 User-friendly interface
 
-Detailed anime information.
+🕒 24/7 availability
 
-Continuous learning and improvement.
+🔥 Tips and Tricks 🔥
 
-User-friendly interface.
+📷 Use clear images for anime and outfit search
 
-24/7 availability.
+💭 Be specific with your requests
 
-💡 Tips and Tricks 💡
+🤝 Feel free to give feedback or suggestions
 
-Use high-quality images for best results.
+💻 I'm always here to help! 😊
 
-Send images with clear views of the anime.
-
-Try sending images from different angles or scenes.
-
-Be patient while our bot analyzes the image.
-
-Made with ❤  by me 💻
-
-Feel free to reach out to us for any questions, feedback, or suggestions. We're always here to help! 😊
-
-Thank you for choosing our Anime Search Bot! We look forward to helping you find your favorite anime. 😊'''
+Thanks for choosing me as your Bro! I'm looking forward to assisting you with all your needs. Let's do this brother! 💪🔥'''
     bot.reply_to(message, welcome_text, parse_mode='HTML')
+
+
+# Чистим текст статьи в Wikipedia и ограничиваем его тысячей символов
+def getwiki(s):
+    try:
+        ny = wikipedia.page(s)
+        # Получаем первую тысячу символов
+        wikitext = ny.content[:1000]
+        # Разделяем по точкам
+        wikimas = wikitext.split('.')
+        # Отбрасываем всЕ после последней точки
+        wikimas = wikimas[:-1]
+        # Создаем пустую переменную для текста
+        wikitext2 = ''
+        # Проходимся по строкам, где нет знаков «равно» (то есть все, кроме заголовков)
+        for x in wikimas:
+            if not('==' in x):
+                    # Если в строке осталось больше трех символов, добавляем ее к нашей переменной и возвращаем утерянные при разделении строк точки на место
+                if len((x.strip())) > 3:
+                   wikitext2 = wikitext2+x+'.'
+            else:
+                break
+        # Теперь при помощи регулярных выражений убираем разметку
+        wikitext2 = re.sub('\([^()]*\)', '', wikitext2)
+        wikitext2 = re.sub('\([^()]*\)', '', wikitext2)
+        wikitext2 = re.sub('\{[^\{\}]*\}', '', wikitext2)
+        # Возвращаем текстовую строку
+        return wikitext2
+    # Обрабатываем исключение, которое мог вернуть модуль wikipedia при запросе
+    except Exception as e:
+        return 'no info bout that '
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -153,13 +182,22 @@ def Sarcher(message):
             reply_markup=markup,
             parse_mode='HTML'
         )
+
     except:
         bot.send_message(message.chat.id, 'Ошибка')
 
 
 @bot.message_handler(content_types=['text'])
 def text(message):
-    bot.send_message(message.chat.id, 'Ошибка: Отправьте картинку для распознавания')
+
+    bot.send_message(message.chat.id, getwiki(message.text))
+
+    bot.send_message(message.chat.id, 'Для поиска информации об аниме отправьте картинку, для поиска информации на википедии отправьте слово.'
+                                      'Для порции мотивации')
+
+# @bot.message_handler(commands=['motivate'])
+# def motivate(message):
+#     bot.send_video('https://www.youtube.com/watch?v=RJQisT_dndc')
 
 
 bot.polling()
